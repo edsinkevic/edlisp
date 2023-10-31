@@ -4,7 +4,6 @@
 #include <assert.h>
 #include <malloc.h>
 
-S_EXPR *SYMBOL_TABLE;
 S_EXPR *NIL;
 
 int CURRENT_INDEX = 0;
@@ -19,23 +18,12 @@ static S_EXPR *edlisp_create_expr(S_EXPR_TYPE type) {
 }
 
 
-S_EXPR *edlisp_make_symbol_(const char *name) {
+S_EXPR *edlisp_make_symbol(const char *name) {
     assert(name != NULL);
 
     S_EXPR *s = edlisp_create_expr(S_SYMBOL);
     s->string_val = strdup(name);
     return s;
-}
-
-S_EXPR *edlisp_make_symbol(const char *name) {
-    assert(name != NULL);
-
-    for (S_EXPR *p = SYMBOL_TABLE; p != NIL; p = p->cdr)
-        if (strcmp(name, p->car->string_val) == 0)
-            return p->car;
-    S_EXPR *sym = edlisp_make_symbol_(name);
-    SYMBOL_TABLE = edlisp_make_cons(sym, SYMBOL_TABLE);
-    return sym;
 }
 
 S_EXPR *edlisp_make_number(int64_t val) {
@@ -76,7 +64,6 @@ S_EXPR *edlisp_make_nil() {
 
 S_EXPR *edlisp_init_tree() {
     NIL = edlisp_create_expr(S_NIL);
-    SYMBOL_TABLE = NIL;
     return NIL;
 }
 
@@ -105,55 +92,6 @@ void emit_dot_header(FILE *f) {
     fprintf(f, "label=\"AST\"\n");
 
     fprintf(f, "subgraph rootnode\n{\nlabel=\"ROOT\"\n");
-}
-
-
-void edlisp_walk_tree(S_EXPR *tree) {
-    if (tree == NIL) {
-        return;
-    }
-
-    printf("ID %d: ", tree->id);
-
-    if (tree->type == S_CONS) {
-        printf("Cons reached!\n");
-        edlisp_walk_tree(tree->car);
-        edlisp_walk_tree(tree->cdr);
-        return;
-    }
-
-    if (tree->type == S_MAP) {
-        printf("Map reached!\n");
-        edlisp_walk_tree(tree->car);
-        edlisp_walk_tree(tree->cdr);
-        return;
-    }
-
-    if (tree->type == S_NIL) {
-        printf("Nil reached!\n");
-        return;
-    }
-    if (tree->type == S_NUMBER) {
-        printf("Number %ld reached!\n", tree->int_val);
-        return;
-    }
-    if (tree->type == S_SYMBOL) {
-        printf("Symbol %s reached!\n", tree->string_val);
-        return;
-    }
-    if (tree->type == S_STRING) {
-        printf("String %s reached!\n", tree->string_val);
-        return;
-    }
-    if (tree->type == S_KEYWORD) {
-        printf("Keyword %s reached!\n", tree->keyword_val);
-        return;
-    }
-    if (tree->type == S_MAP_PAIR) {
-        printf("Map pair reached!\n");
-        return;
-    }
-    printf("Unknown type reached!\n");
 }
 
 void edlisp_walk_tree_dot(S_EXPR *parent, S_EXPR *tree, FILE *f) {
@@ -201,6 +139,8 @@ void edlisp_walk_tree_dot(S_EXPR *parent, S_EXPR *tree, FILE *f) {
         return;
     }
     if (tree->type == S_MAP_PAIR) {
+        edlisp_walk_tree_dot(tree, tree->key, f);
+        edlisp_walk_tree_dot(tree, tree->value, f);
         fprintf(f, "node%d [label=\"Map pair\"] ;\n", tree->id);
         return;
     }

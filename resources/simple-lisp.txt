@@ -1,4 +1,4 @@
 (if
-    (eq 1 1)
+    (eq 1 var)
     (print "Hello, World!" "")
-    (print "Goodbye" . "World"))
+    (print ({1 "Hello" } 1) . "World"))
