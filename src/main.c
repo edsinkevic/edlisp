@@ -1,4 +1,5 @@
 #include "lisp.h"
+#include "edlisp_io.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -8,6 +9,14 @@ extern FILE *yyin;
 
 extern int yyparse(S_EXPR **env);
 
+extern int yylineno;
+extern char *yytext;
+
+extern void yyerror(struct S_EXPR **s_expr, char *e) {
+    fprintf(stderr, "Error on line %d:\n\t%s: %s\n", yylineno, e, yytext);
+    fprintf(stderr, "Printing out dot file so far:\n");
+    edlisp_print_dot_file(stderr, *s_expr);
+}
 
 int main(int argc, char **argv) {
     if (argc != 2) {
@@ -23,10 +32,12 @@ int main(int argc, char **argv) {
     }
 
     struct S_EXPR *s = edlisp_init_tree();
-    yyparse(&s);
+    if (yyparse(&s)) {
+        return EXIT_FAILURE;
+    }
 
-    emit_dot_header(stdout);
-    edlisp_walk_tree_dot(edlisp_make_nil(), s, stdout);
-    fprintf(stdout, "}}\n");
+    edlisp_print_dot_file(stdout, s);
+
     return EXIT_SUCCESS;
 }
+

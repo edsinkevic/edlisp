@@ -54,8 +54,4 @@ S_EXPR *edlisp_make_map_pair(S_EXPR *key, S_EXPR *value);
 
 S_EXPR *edlisp_make_map_cons(S_EXPR *key, S_EXPR *value, S_EXPR *cdr);
 
-void emit_dot_header(FILE *f);
-
-void edlisp_walk_tree_dot(S_EXPR *parent, S_EXPR *tree, FILE *f);
-
 #endif

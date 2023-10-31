@@ -15,6 +15,8 @@ flex_target(LEXER "${SRC_DIR}/lexer.l" "${LEXER_OUT}" DEFINES_FILE "${OUT_DIR}/l
 bison_target(PARSER "${SRC_DIR}/parser.y" "${PARSER_OUT}" DEFINES_FILE "${OUT_DIR}/parser.h")
 add_flex_bison_dependency(LEXER PARSER)
 
-add_executable(edlisp "${SRC_DIR}/main.c" "${SRC_DIR}/lisp.h" "${SRC_DIR}/lisp.c" "${LEXER_OUT}" "${PARSER_OUT}")
+add_executable(edlisp "${SRC_DIR}/main.c" "${SRC_DIR}/lisp.h" "${SRC_DIR}/lisp.c" "${LEXER_OUT}" "${PARSER_OUT}"
+        src/edlisp_io.h
+        src/edlisp_io.c)
 target_include_directories(edlisp PRIVATE "${OUT_DIR}")
 target_include_directories(edlisp PRIVATE "${SRC_DIR}")

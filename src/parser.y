@@ -5,12 +5,7 @@
   #include <errno.h>
   #include "lisp.h"
 
-
-  extern char *yytext;
-  extern int yylineno;
   extern int yylex();
-  extern FILE *yyin;
-
   int yyerror(struct S_EXPR **s_expr, char *e);
 %}
 
@@ -60,6 +55,3 @@ list_items: s { $$ = edlisp_make_cons($1, edlisp_make_nil()); }
 pair     : s L_DOT s { $$ = edlisp_make_cons($1, $3); }
 
 %%
-int yyerror(struct S_EXPR **s_expr, char *e) {
-    fprintf(stderr, "Error on line %d:\n\t%s: %s\n", yylineno, e, yytext);
-}

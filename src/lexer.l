@@ -21,7 +21,7 @@ STRING_R  [\"]([^\"\\\n]|\\.|\\\n)*[\"]
 {SYMBOL_R}	{ yylval.l_symbol = yytext; return L_SYMBOL;		}
 {STRING_R} { yylval.l_string = yytext; return L_STRING;        }
 \\\\                    { return L_COMMENTOPEN;         }
-(\r\n|\r|\n)		{              }
-[ \t]			{ /* ignore whitespace */	}
+(\r\n|\r|\n)		{   }
+[ \t]			{ }
 <<EOF>>	{return L_EOF;}
 %%
