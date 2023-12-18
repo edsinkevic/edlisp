@@ -5,12 +5,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define DEF "def"
+
 typedef struct edlisp_symbol {
   char *name;
   struct edlisp_symbol *next;
 } EDLISP_SYMBOL;
 
 EDLISP_SYMBOL *SYMBOLS;
+
+
+char edlisp_symbol_is(S_EXPR *tree, char *name) {
+  return strcmp(tree->string_val, name) == 0;
+}
 
 char edlisp_symbol_is_defined(S_EXPR *symbol) {
   for (EDLISP_SYMBOL *cursor = SYMBOLS; cursor != NULL; cursor = cursor->next) {
@@ -28,6 +35,7 @@ char edlisp_symbol_is_not_defined(S_EXPR *symbol) {
 
 void edlisp_define_symbol(char *name) {
   assert(name != NULL);
+  printf("Defining symbol '%s'...\n", name);
 
   EDLISP_SYMBOL *sym = malloc(sizeof(EDLISP_SYMBOL *));
   sym->name = strdup(name);
@@ -51,7 +59,6 @@ void edlisp_semantic_init() {
   char *symbols[] = {"+", "-", "print", "if", "eq"};
 
   for (int i = 0; i < sn; ++i) {
-    printf("Defining symbol '%s'...\n", symbols[i]);
     edlisp_define_symbol(symbols[i]);
   }
 }
@@ -85,7 +92,20 @@ void edlisp_analyze_tree(S_EXPR *parent, S_EXPR *tree) {
   }
   if (tree->type == S_SYMBOL) {
     printf("Symbol '%s' detected!\n", tree->string_val);
-    if (edlisp_symbol_is_not_defined(tree)) {
+
+    if (edlisp_symbol_is(tree, DEF)) {
+      S_EXPR *def_body = parent->cdr;
+      assert(def_body != NULL);
+      assert(def_body->type == S_CONS);
+
+      S_EXPR *head = def_body->car;
+      if (head->type != S_SYMBOL) {
+        fprintf(stderr, "'def' expects a symbol and a body!\n");
+        exit(EXIT_FAILURE);
+      }
+
+      edlisp_define_symbol(head->string_val);
+    } else if (edlisp_symbol_is_not_defined(tree)) {
       printf("Symbol '%s' is not defined!\n", tree->string_val);
       exit(1);
     }
