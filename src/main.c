@@ -13,34 +13,42 @@ extern int yyparse(S_EXPR **env);
 extern int yylineno;
 extern char *yytext;
 
-extern void yyerror(struct S_EXPR **s_expr, char *e) {
-    fprintf(stderr, "Error on line %d:\n\t%s: %s\n", yylineno, e, yytext);
-    fprintf(stderr, "Printing out dot file so far:\n");
-    edlisp_print_dot_file(stderr, *s_expr);
+extern void yyerror(S_EXPR **s_expr, char *e) {
+  fprintf(stderr, "Error on line %d:\n\t%s: %s\n", yylineno, e, yytext);
+}
+
+char parse() {
+  S_EXPR *s = edlisp_init_tree();
+  if (yyparse(&s)) {
+    fprintf(stderr, "Could not parse.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (s == edlisp_make_nil()) {
+    printf("Nothing left to parse...\n");
+    return 0;
+  }
+  
+  edlisp_semantic_analysis(s);
+  return 1;
 }
 
 int main(int argc, char **argv) {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: lisp FILE_PATH\n");
-        return EXIT_FAILURE;
-    }
+  if (argc != 2) {
+    fprintf(stderr, "Usage: edlisp FILE_PATH\n");
+    return EXIT_FAILURE;
+  }
 
-    yyin = fopen(argv[1], "r");
+  yyin = fopen(argv[1], "r");
 
-    if (!yyin) {
-        fprintf(stderr, "Could not open file: %s\n", strerror(errno));
-        return EXIT_FAILURE;
-    }
+  if (!yyin) {
+    fprintf(stderr, "Could not open file: %s\n", strerror(errno));
+    return EXIT_FAILURE;
+  }
 
-    struct S_EXPR *s = edlisp_init_tree();
-    if (yyparse(&s)) {
-        return EXIT_FAILURE;
-    }
+  edlisp_semantic_init();
 
-    edlisp_semantic_analysis(s);
+  while (parse()) {}
 
-    edlisp_print_dot_file(stdout, s);
-
-    return EXIT_SUCCESS;
+  return EXIT_SUCCESS;
 }
-

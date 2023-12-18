@@ -1,6 +1,9 @@
 #include "edlisp_semantic.h"
+#include "lisp.h"
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 typedef struct edlisp_symbol {
   char *name;
@@ -10,7 +13,7 @@ typedef struct edlisp_symbol {
 EDLISP_SYMBOL *SYMBOLS;
 
 char edlisp_symbol_is_defined(S_EXPR *symbol) {
-  for (EDLISP_SYMBOL *cursor = SYMBOL; cursor != NULL; cursor->next) {
+  for (EDLISP_SYMBOL *cursor = SYMBOLS; cursor != NULL; cursor = cursor->next) {
     if (strcmp(cursor->name, symbol->string_val) == 0) {
       return 1;
     }
@@ -23,40 +26,34 @@ char edlisp_symbol_is_not_defined(S_EXPR *symbol) {
   return !edlisp_symbol_is_defined(symbol);
 }
 
-void edlisp_symbol_must_be_undefined(char *name) {
-  for (EDLISP_SYMBOL *cursor = SYMBOL; cursor != NULL; cursor->next) {
-    if (strcmp(cursor->name, name) == 0) {
-      printf("Symbol '%s' defined twice!\n");
-      exit(1);
-    }
-  }
-}
-
 void edlisp_define_symbol(char *name) {
   assert(name != NULL);
-  edlisp_symbol_must_be_undefined(name);
 
-  EDLISP_SYMBOL *sym = malloc(sizeof(EDLISP_SYMBOL));
-  sym->name = name;
+  EDLISP_SYMBOL *sym = malloc(sizeof(EDLISP_SYMBOL *));
+  sym->name = strdup(name);
   sym->next = SYMBOLS;
   SYMBOLS = sym;
 }
 
-void edlisp_analyze_tree(S_EXPR *parent, S_EXPR *tree, FILE *f);
+void edlisp_analyze_tree(S_EXPR *parent, S_EXPR *tree);
 
 S_EXPR *edlisp_semantic_analysis(S_EXPR *expr) {
   printf("Running semantic analysis...\n");
+  edlisp_analyze_tree(edlisp_make_nil(), expr);
+  return NULL;
+}
+
+void edlisp_semantic_init() {
+  printf("Initializing semantic analysis...\n");
 
   SYMBOLS = NULL;
-  symbols = {"+", "-", "print", "if"};
-  sn = 4;
+  int sn = 5;
+  char *symbols[] = {"+", "-", "print", "if", "eq"};
 
   for (int i = 0; i < sn; ++i) {
     printf("Defining symbol '%s'...\n", symbols[i]);
     edlisp_define_symbol(symbols[i]);
   }
-
-  edlisp_analyze_tree(NULL, expr);
 }
 
 void edlisp_analyze_tree(S_EXPR *parent, S_EXPR *tree) {
@@ -69,14 +66,14 @@ void edlisp_analyze_tree(S_EXPR *parent, S_EXPR *tree) {
   }
 
   if (tree->type == S_CONS) {
-    edlisp_walk_tree_dot(tree, tree->car, f);
-    edlisp_walk_tree_dot(tree, tree->cdr, f);
+    edlisp_analyze_tree(tree, tree->car);
+    edlisp_analyze_tree(tree, tree->cdr);
     return;
   }
 
   if (tree->type == S_MAP) {
-    edlisp_walk_tree_dot(tree, tree->car, f);
-    edlisp_walk_tree_dot(tree, tree->cdr, f);
+    edlisp_analyze_tree(tree, tree->car);
+    edlisp_analyze_tree(tree, tree->cdr);
     return;
   }
 
@@ -87,11 +84,11 @@ void edlisp_analyze_tree(S_EXPR *parent, S_EXPR *tree) {
     return;
   }
   if (tree->type == S_SYMBOL) {
+    printf("Symbol '%s' detected!\n", tree->string_val);
     if (edlisp_symbol_is_not_defined(tree)) {
       printf("Symbol '%s' is not defined!\n", tree->string_val);
       exit(1);
     }
-
     return;
   }
   if (tree->type == S_STRING) {
@@ -101,8 +98,8 @@ void edlisp_analyze_tree(S_EXPR *parent, S_EXPR *tree) {
     return;
   }
   if (tree->type == S_MAP_PAIR) {
-    edlisp_walk_tree_dot(tree, tree->key, f);
-    edlisp_walk_tree_dot(tree, tree->value, f);
+    edlisp_analyze_tree(tree, tree->key);
+    edlisp_analyze_tree(tree, tree->value);
     return;
   }
 
