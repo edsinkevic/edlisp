@@ -1,5 +1,6 @@
 #include "lisp.h"
 #include "edlisp_io.h"
+#include "edlisp_semantic.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -35,6 +36,8 @@ int main(int argc, char **argv) {
     if (yyparse(&s)) {
         return EXIT_FAILURE;
     }
+
+    edlisp_semantic_analysis(s);
 
     edlisp_print_dot_file(stdout, s);
 

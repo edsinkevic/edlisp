@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.22)
 project(edlisp C)
 
 find_package(FLEX 2.6 REQUIRED)
@@ -17,6 +17,9 @@ add_flex_bison_dependency(LEXER PARSER)
 
 add_executable(edlisp "${SRC_DIR}/main.c" "${SRC_DIR}/lisp.h" "${SRC_DIR}/lisp.c" "${LEXER_OUT}" "${PARSER_OUT}"
         src/edlisp_io.h
-        src/edlisp_io.c)
+        src/edlisp_io.c
+        src/edlisp_semantic.h
+        src/edlisp_semantic.c
+        )
 target_include_directories(edlisp PRIVATE "${OUT_DIR}")
 target_include_directories(edlisp PRIVATE "${SRC_DIR}")
