@@ -1,0 +1,1 @@
+(print "Hello, world!" "Result of 1 + 1 is: " (+ 1 1))

@@ -1,4 +1,4 @@
-#include "edlisp_semantic.h"
+#include "edlisp_eval.h"
 #include "lisp.h"
 #include <assert.h>
 #include <string.h>
@@ -86,10 +86,11 @@ S_EXPR *execute_print(S_EXPR *args) {
 
   S_EXPR *result = edlisp_eval(args->car);
   edlisp_print(result);
+  execute_print(args->cdr);
   return edlisp_make_nil();
 }
 
-S_EXPR *execute_if   (S_EXPR *args) {
+S_EXPR *execute_if(S_EXPR *args) {
   return args;
 }
 S_EXPR *execute_eq   (S_EXPR *args) {
@@ -173,10 +174,10 @@ void edlisp_print(S_EXPR *tree) {
       edlisp_print(tree->car);
       return;
     case S_SYMBOL:
-      printf("%s\n", tree->string_val);
+      printf(":%s:\n", tree->string_val);
       return;
     case S_STRING:
-      printf("\"%s\"\n", tree->string_val);
+      printf("%s\n", tree->string_val);
       return;
     case S_NIL:
       printf("nil\n");

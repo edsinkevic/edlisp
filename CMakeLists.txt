@@ -16,10 +16,12 @@ bison_target(PARSER "${SRC_DIR}/parser.y" "${PARSER_OUT}" DEFINES_FILE "${OUT_DI
 add_flex_bison_dependency(LEXER PARSER)
 
 add_executable(edlisp "${SRC_DIR}/main.c" "${SRC_DIR}/lisp.h" "${SRC_DIR}/lisp.c" "${LEXER_OUT}" "${PARSER_OUT}"
-        src/edlisp_io.h
-        src/edlisp_io.c
-        src/edlisp_semantic.h
-        src/edlisp_semantic.c
+        src/edlisp_eval.h
+        src/edlisp_eval.c
+        src/cli_app.h
+        src/cli_app.c
+        src/file_app.h
+        src/file_app.c
         )
 target_include_directories(edlisp PRIVATE "${OUT_DIR}")
 target_include_directories(edlisp PRIVATE "${SRC_DIR}")

@@ -1,5 +1,5 @@
-#ifndef EDLISP_SEMANTIC_H
-#define EDLISP_SEMANTIC_H
+#ifndef EDLISP_EVAL_H
+#define EDLISP_EVAL_H
 
 #include "lisp.h"
 #include <stdint.h>
