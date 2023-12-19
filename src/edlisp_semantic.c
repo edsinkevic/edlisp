@@ -5,123 +5,184 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define DEF "def"
-
-typedef struct edlisp_symbol {
-  char *name;
-  struct edlisp_symbol *next;
-} EDLISP_SYMBOL;
-
-EDLISP_SYMBOL *SYMBOLS;
-
-
 char edlisp_symbol_is(S_EXPR *tree, char *name) {
   return strcmp(tree->string_val, name) == 0;
 }
 
-char edlisp_symbol_is_defined(S_EXPR *symbol) {
+EDLISP_SYMBOL *edlisp_symbol_get(S_EXPR *symbol) {
+  assert(symbol != NULL);
+  if (symbol->type != S_SYMBOL) {
+    return NULL;
+  }
+
   for (EDLISP_SYMBOL *cursor = SYMBOLS; cursor != NULL; cursor = cursor->next) {
-    if (strcmp(cursor->name, symbol->string_val) == 0) {
-      return 1;
+    if (edlisp_symbol_is(symbol, cursor->name)) {
+      return cursor;
     }
   }
 
-  return 0;
+  return NULL;
 }
 
 char edlisp_symbol_is_not_defined(S_EXPR *symbol) {
-  return !edlisp_symbol_is_defined(symbol);
+  return edlisp_symbol_get(symbol) == NULL;
 }
 
-void edlisp_define_symbol(char *name) {
+void edlisp_define_symbol(char *name, EDLISP_EXECUTION execution, S_EXPR *value) {
   assert(name != NULL);
   printf("Defining symbol '%s'...\n", name);
 
   EDLISP_SYMBOL *sym = malloc(sizeof(EDLISP_SYMBOL *));
   sym->name = strdup(name);
   sym->next = SYMBOLS;
+  sym->value = value;
+  sym->execute = execution;
   SYMBOLS = sym;
 }
 
 void edlisp_analyze_tree(S_EXPR *parent, S_EXPR *tree);
 
-S_EXPR *edlisp_semantic_analysis(S_EXPR *expr) {
-  printf("Running semantic analysis...\n");
-  edlisp_analyze_tree(edlisp_make_nil(), expr);
-  return NULL;
+S_EXPR *execute_plus_op(S_EXPR *a, S_EXPR *b) {
+  if (a->type != S_NUMBER || b->type != S_NUMBER) {
+    printf("Not a number detected in plus!...");
+    return edlisp_make_number(0);
+  }
+  int sum = a->int_val + b->int_val;
+  return edlisp_make_number(sum);
+}
+
+
+S_EXPR *execute_minus_op(S_EXPR *a, S_EXPR *b) {
+  if (a->type != S_NUMBER || b->type != S_NUMBER || edlisp_nil_is(b)) {
+    printf("Not a number detected in minus!...");
+    return edlisp_make_number(0);
+  }
+
+  return edlisp_make_number(a->int_val - b->int_val);
+}
+
+S_EXPR *execute_plus(S_EXPR *args) {
+  if (edlisp_nil_is(args)) {
+    return edlisp_make_number(0);
+  }
+
+  S_EXPR *head = args->car;
+  return execute_plus_op(edlisp_eval(head), execute_plus(args->cdr));
+}
+
+S_EXPR *execute_minus(S_EXPR *args) {
+  if (edlisp_nil_is(args)) {
+    return edlisp_make_number(0);
+  }
+
+  S_EXPR *head = args->car;
+  return execute_minus_op(edlisp_eval(head), execute_minus(args->cdr));
+}
+
+S_EXPR *execute_print(S_EXPR *args) {
+  if (edlisp_nil_is(args)) {
+    return edlisp_make_nil();
+  }
+
+  S_EXPR *result = edlisp_eval(args->car);
+  edlisp_print(result);
+  return edlisp_make_nil();
+}
+
+S_EXPR *execute_if   (S_EXPR *args) {
+  return args;
+}
+S_EXPR *execute_eq   (S_EXPR *args) {
+  return args;
+}
+
+S_EXPR *execute_def(S_EXPR *args) {
+  assert(args->type == S_CONS);
+
+  S_EXPR *head = args->car;
+  assert(head != NULL);
+  if (head->type != S_SYMBOL) {
+    fprintf(stderr, "'def' expects a symbol and a body!\n");
+    return edlisp_make_nil();
+  }
+
+  assert(head->string_val != NULL);
+  S_EXPR *result = edlisp_eval(args->cdr->car);
+  edlisp_define_symbol(head->string_val, NULL, result);
+
+  return result;
 }
 
 void edlisp_semantic_init() {
   printf("Initializing semantic analysis...\n");
 
   SYMBOLS = NULL;
-  int sn = 5;
-  char *symbols[] = {"+", "-", "print", "if", "eq"};
+  int sn = 6;
+  char *symbols[] = {"+", "-", "print", "if", "eq", "def"};
+  EDLISP_EXECUTION executions[] = {
+    &execute_plus,
+    &execute_minus,
+    &execute_print,
+    &execute_if,
+    &execute_eq,
+    &execute_def
+  };
 
   for (int i = 0; i < sn; ++i) {
-    edlisp_define_symbol(symbols[i]);
+    edlisp_define_symbol(symbols[i], executions[i], NULL);
   }
 }
 
-void edlisp_analyze_tree(S_EXPR *parent, S_EXPR *tree) {
-  if (tree == edlisp_make_nil()) {
-    return;
-  }
+S_EXPR *edlisp_symbol_execute(S_EXPR *s, S_EXPR *args) {
+  EDLISP_SYMBOL *symbol = edlisp_symbol_get(s);
 
-  if (parent == edlisp_make_nil()) {
-  } else {
-  }
+  printf("Executing %s...\n", symbol->name);
+  assert(symbol != NULL);
+  assert(symbol->execute != NULL);
+  return symbol->execute(args);
+}
 
-  if (tree->type == S_CONS) {
-    edlisp_analyze_tree(tree, tree->car);
-    edlisp_analyze_tree(tree, tree->cdr);
-    return;
-  }
-
-  if (tree->type == S_MAP) {
-    edlisp_analyze_tree(tree, tree->car);
-    edlisp_analyze_tree(tree, tree->cdr);
-    return;
-  }
-
-  if (tree->type == S_NIL) {
-    return;
-  }
-  if (tree->type == S_NUMBER) {
-    return;
-  }
-  if (tree->type == S_SYMBOL) {
-    printf("Symbol '%s' detected on line %d...\n", tree->string_val, tree->first_line);
-
-    if (edlisp_symbol_is(tree, DEF)) {
-      S_EXPR *def_body = parent->cdr;
-      assert(def_body != NULL);
-      assert(def_body->type == S_CONS);
-
-      S_EXPR *head = def_body->car;
-      if (head->type != S_SYMBOL) {
-        fprintf(stderr, "'def' expects a symbol and a body!\n");
-        exit(EXIT_FAILURE);
+S_EXPR *edlisp_eval(S_EXPR *tree) {
+  assert(tree != NULL);
+  switch (tree->type) {
+    case S_CONS:
+      S_EXPR *symbol = tree->car;
+      S_EXPR *args = tree->cdr;
+      return edlisp_symbol_execute(symbol, args);
+    case S_SYMBOL:
+      printf("Symbol '%s' detected on line %d...\n", tree->string_val, tree->first_line);
+      if (edlisp_symbol_is_not_defined(tree)) {
+        printf("Symbol '%s' is not defined!\n", tree->string_val);
+        return NULL;
       }
-
-      edlisp_define_symbol(head->string_val);
-    } else if (edlisp_symbol_is_not_defined(tree)) {
-      printf("Symbol '%s' is not defined!\n", tree->string_val);
-      exit(1);
-    }
-    return;
-  }
-  if (tree->type == S_STRING) {
-    return;
-  }
-  if (tree->type == S_KEYWORD) {
-    return;
-  }
-  if (tree->type == S_MAP_PAIR) {
-    edlisp_analyze_tree(tree, tree->key);
-    edlisp_analyze_tree(tree, tree->value);
-    return;
+      EDLISP_SYMBOL *sym = edlisp_symbol_get(tree);
+      return sym->value;
   }
 
-  printf("Unknown type reached!\n");
+  return tree;
+}
+
+void edlisp_print(S_EXPR *tree) {
+  assert(tree != NULL);
+  switch (tree->type) {
+    case S_NUMBER:
+      printf("%ld\n", tree->int_val);
+      return;
+    case S_CONS:
+      printf("Printing cons...\n");
+      edlisp_print(tree->car);
+      return;
+    case S_SYMBOL:
+      printf("%s\n", tree->string_val);
+      return;
+    case S_STRING:
+      printf("\"%s\"\n", tree->string_val);
+      return;
+    case S_NIL:
+      printf("nil\n");
+      return;
+  }
+
+  printf("Printing unimplemented for %d!\n", tree->type);
+  return;
 }

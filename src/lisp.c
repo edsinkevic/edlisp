@@ -8,6 +8,10 @@ S_EXPR *NIL;
 
 int CURRENT_INDEX = 0;
 
+char edlisp_nil_is(S_EXPR *expr) {
+  return expr == NIL;
+}
+
 static S_EXPR *edlisp_create_expr(S_EXPR_TYPE type) {
     S_EXPR *s = calloc(1, sizeof(*s));
     assert(s != NULL);

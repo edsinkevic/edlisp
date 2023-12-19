@@ -39,6 +39,8 @@ typedef struct S_EXPR {
 
 S_EXPR *edlisp_make_symbol(const char *name);
 
+char edlisp_nil_is(S_EXPR *expr);
+
 S_EXPR *edlisp_make_number(int64_t val);
 
 S_EXPR *edlisp_make_keyword(char *val);

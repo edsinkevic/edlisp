@@ -6,12 +6,20 @@
 #include <errno.h>
 #include <string.h>
 
+#define INPUT_BUFFER_SIZE 6400
+
+char INPUT_BUFFER[INPUT_BUFFER_SIZE];
+
 extern FILE *yyin;
 
 extern int yyparse(S_EXPR **env);
 
 extern int yylineno;
 extern char *yytext;
+
+typedef struct yy_buffer_state *YY_BUFFER_STATE;
+extern YY_BUFFER_STATE yy_scan_string(char * str);
+extern void yy_delete_buffer(YY_BUFFER_STATE buffer);
 
 extern void yyerror(S_EXPR **s_expr, char *e) {
   fprintf(stderr, "Error on line %d:\n\t%s: %s\n", yylineno, e, yytext);
@@ -21,34 +29,39 @@ char parse() {
   S_EXPR *s = edlisp_init_tree();
   if (yyparse(&s)) {
     fprintf(stderr, "Could not parse.\n");
-    exit(EXIT_FAILURE);
+    return 0;
   }
 
-  if (s == edlisp_make_nil()) {
+  if (edlisp_nil_is(s)) {
     printf("Nothing left to parse...\n");
     return 0;
   }
   
-  edlisp_semantic_analysis(s);
+  S_EXPR *result = edlisp_eval(s);
+  edlisp_print(result);
   return 1;
 }
 
 int main(int argc, char **argv) {
-  if (argc != 2) {
-    fprintf(stderr, "Usage: edlisp FILE_PATH\n");
-    return EXIT_FAILURE;
-  }
-
-  yyin = fopen(argv[1], "r");
-
-  if (!yyin) {
-    fprintf(stderr, "Could not open file: %s\n", strerror(errno));
-    return EXIT_FAILURE;
-  }
-
   edlisp_semantic_init();
 
-  while (parse()) {}
+  while (1) {
+    printf("\n$/ ");
+
+    if (!fgets(INPUT_BUFFER, INPUT_BUFFER_SIZE, stdin)) {
+      if (errno) {
+        fprintf(stderr, "Could not read input: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
+      }
+      break;
+    }
+
+    YY_BUFFER_STATE buffer = yy_scan_string(INPUT_BUFFER);
+
+    while(parse()) {}
+    yy_delete_buffer(buffer);
+
+  }
 
   return EXIT_SUCCESS;
 }
