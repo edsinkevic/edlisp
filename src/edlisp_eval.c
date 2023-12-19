@@ -91,8 +91,21 @@ S_EXPR *execute_print(S_EXPR *args) {
 }
 
 S_EXPR *execute_if(S_EXPR *args) {
-  return args;
+  S_EXPR *boolean_expr = args->car;
+  S_EXPR *bool_result = edlisp_eval(boolean_expr);
+
+  S_EXPR *if_body = args->cdr;
+
+  if (bool_result->type != S_NUMBER || bool_result->int_val == 0) {
+    S_EXPR *else_body = if_body->cdr;
+    if (!edlisp_nil_is(else_body)) {
+      return edlisp_eval(else_body->car);
+    }
+  }
+
+  return edlisp_eval(if_body->car);
 }
+
 S_EXPR *execute_eq   (S_EXPR *args) {
   return args;
 }

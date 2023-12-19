@@ -1,1 +1,6 @@
-(print "Hello, world!" "Result of 1 + 1 is: " (+ 1 1))
+(def var 1)
+
+(print 
+  (if var
+    (print "Hello, world!") 
+    (print "Goodbye, world!")))

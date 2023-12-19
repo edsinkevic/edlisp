@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -x
-
 BUILD_DIR=cmake-build-debug
 
 cmake . -B $BUILD_DIR
