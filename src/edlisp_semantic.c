@@ -91,7 +91,7 @@ void edlisp_analyze_tree(S_EXPR *parent, S_EXPR *tree) {
     return;
   }
   if (tree->type == S_SYMBOL) {
-    printf("Symbol '%s' detected!\n", tree->string_val);
+    printf("Symbol '%s' detected on line %d...\n", tree->string_val, tree->first_line);
 
     if (edlisp_symbol_is(tree, DEF)) {
       S_EXPR *def_body = parent->cdr;

@@ -1,4 +1,5 @@
 %option noyywrap
+%option yylineno
 %{
   #include <stdio.h>
   #include <stdlib.h>
@@ -16,12 +17,12 @@ STRING_R  [\"]([^\"\\\n]|\\.|\\\n)*[\"]
 "{"			{ return L_OPENMAP;		}
 "}"			{ return L_CLOSEMAP;		}
 \.			{ return L_DOT;			} 
-{DIGIT_R}		{ yylval.l_number = atoi(yytext); return L_NUMBER;		}
-{KEYWORD_R}	{ yylval.l_keyword = yytext; return L_KEYWORD;		}
-{SYMBOL_R}	{ yylval.l_symbol = yytext; return L_SYMBOL;		}
-{STRING_R} { yylval.l_string = yytext; return L_STRING;        }
+{DIGIT_R}		{ yylval.l_number = atoi(yytext);  return L_NUMBER;		}
+{KEYWORD_R}	{ yylval.l_keyword = yytext;  return L_KEYWORD;		}
+{SYMBOL_R}	{ yylval.l_symbol = yytext;  return L_SYMBOL;		}
+{STRING_R} { yylval.l_string = yytext;  return L_STRING;        }
 \\\\                    { return L_COMMENTOPEN;         }
-(\r\n|\r|\n)		{   }
+(\r\n|\r|\n)		{ }
 [ \t]			{ }
 <<EOF>>	{return L_EOF;}
 %%

@@ -18,6 +18,7 @@ typedef enum {
 typedef struct S_EXPR {
     S_EXPR_TYPE type;
     int id;
+    int first_line;
     union {
         int64_t int_val; /* NUMBER */
         char bool_val; /* BOOL */
@@ -53,5 +54,7 @@ S_EXPR *edlisp_init_tree();
 S_EXPR *edlisp_make_map_pair(S_EXPR *key, S_EXPR *value);
 
 S_EXPR *edlisp_make_map_cons(S_EXPR *key, S_EXPR *value, S_EXPR *cdr);
+
+S_EXPR *edlisp_attach_location(S_EXPR *expr, int first_line);
 
 #endif

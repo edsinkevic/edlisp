@@ -83,3 +83,8 @@ S_EXPR *edlisp_make_map_cons(S_EXPR *key, S_EXPR *value, S_EXPR *cdr) {
     s->cdr = cdr;
     return s;
 }
+
+S_EXPR *edlisp_attach_location(S_EXPR *expr, int first_line) {
+  expr->first_line = first_line;
+  return expr;
+}
